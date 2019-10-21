@@ -213,7 +213,7 @@ func (s *TLSServer) ListenAndServe() error {
 	return s.ListenServeAndSignal(nil)
 }
 
-// Serve creates a new server and serves with the given net.Listener.
+/* Serve creates a new server and serves with the given net.Listener.
 func Serve(ln net.Listener,
 	handler func(conn Conn, cmd Command),
 	accept func(conn Conn) bool,
@@ -229,8 +229,9 @@ func Serve(ln net.Listener,
 		conns:   make(map[*conn]bool),
 	}
 
-	return serve(s)
-}
+	return nil
+	//return serve(s)
+}*/
 
 // ListenAndServe creates a new server and binds to addr configured on "tcp" network net.
 func ListenAndServe(addr string,
@@ -288,7 +289,8 @@ func (s *Server) ListenServeAndSignal(signal chan error) error {
 	if signal != nil {
 		signal <- nil
 	}
-	return serve(s)
+	return nil
+	//return serve(s)
 }
 
 // Serve serves incoming connections with the given net.Listener.
@@ -296,7 +298,8 @@ func (s *Server) Serve(ln net.Listener) error {
 	s.ln = ln
 	s.net = ln.Addr().Network()
 	s.laddr = ln.Addr().String()
-	return serve(s)
+	return nil
+	//return serve(s)
 }
 
 // ListenServeAndSignal serves incoming connections and passes nil or error
@@ -313,10 +316,11 @@ func (s *TLSServer) ListenServeAndSignal(signal chan error) error {
 	if signal != nil {
 		signal <- nil
 	}
-	return serve(s.Server)
+	return nil
+	// return serve(s.Server)
 }
 
-func serve(s *Server) error {
+func AcceptLoop(s *Server) error {
 	defer func() {
 		s.ln.Close()
 		func() {
