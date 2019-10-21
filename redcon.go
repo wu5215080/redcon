@@ -129,6 +129,7 @@ func NewServerNetwork(
 		accept:  accept,
 		closed:  closed,
 		conns:   make(map[*conn]bool),
+		cm:		 NewConnectionManager(),
 	}
 	return s
 }
@@ -181,6 +182,18 @@ func (s *Server) ListenAndServe() error {
 // Addr returns server's listen address
 func (s *Server) Addr() net.Addr {
 	return s.ln.Addr()
+}
+
+func (s *Server) ConnectionsCounter() int {
+	return s.cm.Counter
+}
+
+func (s *Server) Wait() {
+	s.cm.Wait()
+}
+
+func (s *Server)GetListener() (*net.TCPListener){
+	return s.ln.(*net.TCPListener)
 }
 
 // Close stops listening on the TCP address.
@@ -342,7 +355,9 @@ func serve(s *Server) error {
 			c.Close()
 			continue
 		}
+		s.cm.Add(1)
 		go handle(s, c)
+		s.cm.Done()
 	}
 }
 
@@ -526,6 +541,7 @@ type Server struct {
 	accept  func(conn Conn) bool
 	closed  func(conn Conn, err error)
 	conns   map[*conn]bool
+	cm     *ConnectionManager
 	ln      net.Listener
 	done    bool
 }
