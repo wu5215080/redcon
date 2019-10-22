@@ -8,6 +8,8 @@ import (
 	"io"
 	"net"
 	"sync"
+	"fmt"
+	"os"
 )
 
 var (
@@ -99,6 +101,39 @@ func NewServer(addr string,
 	closed func(conn Conn, err error),
 ) *Server {
 	return NewServerNetwork("tcp", addr, handler, accept, closed)
+}
+
+func NewServerFromFD(addr string,
+	handler func(conn Conn, cmd Command),
+	accept func(conn Conn) bool,
+	closed func(conn Conn, err error),
+) *Server {
+
+	file := os.NewFile(3, "/tmp/srv")
+	listener, err := net.FileListener(file)
+	if err != nil {
+		fmt.Printf("File to recover socket from file descriptor: " + err.Error())
+		return nil
+	}
+
+	listenerTCP, ok := listener.(*net.TCPListener)
+	if !ok {
+		fmt.Printf("File descriptor is not a valid TCP socket\n")
+		return nil
+	}
+
+	s := &Server{
+		net:     "tcp",
+		laddr:   addr,
+		handler: handler,
+		accept:  accept,
+		closed:  closed,
+		conns:   make(map[*conn]bool),
+		cm:		 NewConnectionManager(),
+		ln:      listenerTCP,
+	}
+
+	return s
 }
 
 // NewServerTLS returns a new Redcon TLS server configured on "tcp" network net.
